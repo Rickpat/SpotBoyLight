@@ -1,0 +1,50 @@
+<resources>
+    <!-- Default screen margins, per the Android Design guidelines. -->
+    <dimen name="activity_horizontal_margin">16dp</dimen>
+    <dimen name="activity_vertical_margin">16dp</dimen>
+    <dimen name="fab_margin">16dp</dimen>
+
+    <!-- About Activity -->
+    <dimen name="about_logo_dimen">100dp</dimen>
+    <dimen name="about_logo_margin">10dp</dimen>
+    <dimen name="about_content_padding">10dp</dimen>
+    <dimen name="main_title_textSize">30sp</dimen>
+    <dimen name="about_credits_textSize">14sp</dimen>
+    <dimen name="about_text_padding">5dp</dimen>
+    <dimen name="new_imageViewVerticalHeight">250dp</dimen>
+    <dimen name="default_toolbar_height">56dp</dimen>
+
+    <dimen name="default_line_height">48dp</dimen>
+    <dimen name="default_text_padding_below_above">16dp</dimen>
+    <dimen name="default_text_padding_left_right">10dp</dimen>
+    <dimen name="default_spot_icon_margin">16dp</dimen>
+    <dimen name="default_text_size">13sp</dimen>
+
+    <dimen name="cardView_image_width">356dp</dimen>
+    <dimen name="cardView_image_height">200dp</dimen>
+    <dimen name="card_view_margin_all">20dp</dimen>
+
+    <dimen name="card_view_action_button_row_padding">8dp</dimen>
+    <dimen name="card_view_category_top_padding">24dp</dimen>
+    <dimen name="card_view_category_bottom_padding">16dp</dimen>
+
+    <dimen name="card_view_category_text_size">24sp</dimen>
+    <dimen name="card_view_text_padding_side">16dp</dimen>
+    <dimen name="card_view_date_text_size">14sp</dimen>
+    <dimen name="line_margin_all">2dp</dimen>
+    <dimen name="infoWindowTextSize">10sp</dimen>
+
+    <dimen name="infoWindow_imageDimMax">100dp</dimen>
+
+    <dimen name="hub_card_maxImgHeight">200dp</dimen>
+    <dimen name="hub_card_width">300dp</dimen>
+    <dimen name="hub_card_height">296dp</dimen>
+    <dimen name="hub_card_top_padding">15dp</dimen>
+
+
+    <dimen name="info_cardView_width">@dimen/hub_card_width</dimen>
+    <dimen name="info_card_maxImgHeight">@dimen/hub_card_maxImgHeight</dimen>
+
+    <dimen name="info_card_margin_topBottom">20dp</dimen>
+    <dimen name="info_card_image_maxWidth">400dp</dimen>
+</resources>
