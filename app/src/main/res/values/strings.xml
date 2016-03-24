@@ -1,3 +1,36 @@
 <resources>
     <string name="app_name">SpotBoyLight</string>
+    <string name="activity_about_title">About</string>
+    <string name="action_about">about</string>
+    <string name="action_create">create</string>
+    <string name="activity_new_title">New spot</string>
+    <string name="action_hub">hub</string>
+    <string name="action_new">new</string>
+
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="marker">marker</string>
+
+
+    <string name="credits">created by Patrick Schwarzenecker</string>
+    <string name="creation_time">2016</string>
+    <string name="libraries">libraries</string>
+    <string name="default_content_description">bla</string>
+    <string name="waiting_for_gps_signal_message">receiving gps signal</string>
+    <string name="new_spot_default_cat">STREET</string>
+    <string name="category">category</string>
+    <string name="xxx">xxxxxx</string>
+    <string name="longitude">longitude</string>
+    <string name="latitude">latitude</string>
+    <string name="notes">notes</string>
+    <string name="error_message_img">image error</string>
+    <string name="spot_created_message">spot created</string>
+    <string name="more">more</string>
+    <string name="new_marker_alert_message">set new marker?</string>
+    <string name="activity_hub_title">Hub</string>
+    <string name="activity_info_title">SpotInfo</string>
+    <string name="new_cat_alert_title">set new type</string>
+    <string name="new_notes_dialog_title">set new notes</string>
+    <string name="action_delete">delete</string>
+    <string name="spot_deleted_message">spot deleted</string>
 </resources>
