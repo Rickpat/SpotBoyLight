@@ -1,2 +1,2 @@
 # SpotBoyLight...
-![Alt text](Rickpat/SpotBoyLight/master/app/src/main/res/mipmap-xxhdpi/ic_launcher.png?raw=true "Optional Title")
+![Alt text](/master/app/src/main/res/mipmap-xxhdpi/ic_launcher.png?raw=true "Optional Title")
