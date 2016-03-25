@@ -1,2 +1,2 @@
 # SpotBoyLight...
-![alt tag](http://www.directupload.net/file/d/4304/h2j9rrri_png.htm)
+![Alt text](Rickpat/SpotBoyLight/master/app/src/main/res/mipmap-xxhdpi/ic_launcher.png?raw=true "Optional Title")
