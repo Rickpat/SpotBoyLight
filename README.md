@@ -1,6 +1,6 @@
 # SpotBoyLight...
 ![alt text](https://raw.githubusercontent.com/Rickpat/SpotBoyLight/master/app/src/main/res/mipmap-xxhdpi/ic_launcher.png "","")
-- android 4.0.4 - 6
+- android 4.0.3 - 6
 - material design & backwards compatibility (android support library v7)
 - marker clustering
 - marker layer
