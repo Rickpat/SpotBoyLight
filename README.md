@@ -3,7 +3,7 @@
 - android 4.0.3 - 6
 - material design & backwards compatibility (android support library v7)
 - marker clustering
-- marker layer
+- selectable marker layer
 - open street maps
 - offline usable(with maptiles)
 - free
