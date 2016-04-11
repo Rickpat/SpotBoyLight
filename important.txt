@@ -1,0 +1,7 @@
+keystore
+pw: hallo123
+KEY-----------
+Alias: PatrickSchwarzenecker
+pw: mamamia
+SETUP MASTER PASSWORD
+pw: hosenhans
