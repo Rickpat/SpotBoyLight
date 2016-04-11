@@ -54,6 +54,13 @@
 
         </activity>
 
+        <activity
+            android:name=".KMLActivity"
+            android:label="@string/activity_kml_title"
+            android:theme="@style/AppTheme.NoActionBar">
+
+        </activity>
+
 
     </application>
 

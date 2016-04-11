@@ -21,12 +21,16 @@ import com.rickpat.spotboylight.spotboy_db.Spot;
 import com.rickpat.spotboylight.spotboy_db.SpotBoyDBHelper;
 import com.google.gson.Gson;
 
+import org.osmdroid.bonuspack.kml.KmlDocument;
+import org.osmdroid.bonuspack.overlays.FolderOverlay;
 import org.osmdroid.bonuspack.overlays.MapEventsOverlay;
 import org.osmdroid.bonuspack.overlays.MapEventsReceiver;
 import org.osmdroid.bonuspack.overlays.Marker;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
+
+import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 
@@ -40,14 +44,23 @@ public class MainActivity extends AppCompatActivity implements MapEventsReceiver
     private MapView map;
     private AlertDialog markerDialog;
     private AlertDialog newMarkerDialog;
-
+    private File kmlFile;
     private HashMap<SpotType,SpotCluster> clusterHashMap;
+    private FolderOverlay kmlOverlay;
 
-    @Override
+    @Override   //after onPause
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
+        Log.d(log, "onSaveInstanceState");
         SharedPreferences preferences = getSharedPreferences(PREFERENCES, MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
+        if ( kmlFile != null ) {
+            editor.putString(KML_FILE, new Gson().toJson(kmlFile));
+        } else {
+            if (preferences.contains(KML_FILE)){
+                editor.remove(KML_FILE);
+            }
+        }
         editor.putString(GEO_POINT, new Gson().toJson(map.getMapCenter()));
         editor.putInt(ZOOM_LEVEL, map.getZoomLevel());
         editor.apply();
@@ -56,28 +69,28 @@ public class MainActivity extends AppCompatActivity implements MapEventsReceiver
     @Override
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
+        Log.d(log, "onRestoreInstanceState");
         SharedPreferences preferences = getSharedPreferences(PREFERENCES, MODE_PRIVATE);
+        if (preferences.contains(KML_FILE)){
+            kmlFile = new Gson().fromJson(preferences.getString(KML_FILE,""),File.class);
+        }
         map.getController().setCenter(new Gson().fromJson(preferences.getString(GEO_POINT, ""), GeoPoint.class));
         map.getController().setZoom(preferences.getInt(ZOOM_LEVEL, 18));
     }
 
-    @Override
+    @Override   //called by action
     protected void onPause() {
         super.onPause();
+        Log.d(log, "onPause");
         myPositionOverlay.disableMyLocation();
         removeMarkerCluster();
+        removeKMLOverlay();
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        myPositionOverlay.enableMyLocation();
-        setMarkerCluster();
-    }
-
-    @Override
+    @Override   //first call
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.d(log, "onCreate");
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_main);
         setSupportActionBar(toolbar);
@@ -85,11 +98,31 @@ public class MainActivity extends AppCompatActivity implements MapEventsReceiver
         setMap();
         setMarkerDialog();
         setFab();
+        //next onStart
+    }
+
+    @Override   //after onCreate
+    protected void onStart() {
+        super.onStart();
+        Log.d(log, "onStart");
+        // next onRestoreInstanceState after e.g. screen orientation changed
+        // otherwise onResume
+    }
+
+    @Override   //after onStart or onRestoreInstanceState
+    protected void onResume() {
+        super.onResume();
+        Log.d(log, "onResume");
+        myPositionOverlay.enableMyLocation();
+        setMarkerCluster();
+        createKMLOverlay();
+        //now activity is running till onPause
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        Log.d(log, "onActivityResult");
         if ( requestCode == HUB_REQUEST && resultCode == HUB_SHOW_ON_MAP){
             Bundle bundle = data.getExtras();
             if (bundle.containsKey(SPOT)){
@@ -100,6 +133,26 @@ public class MainActivity extends AppCompatActivity implements MapEventsReceiver
         }
         if ( requestCode == INFO_ACTIVITY_REQUEST && resultCode == INFO_ACTIVITY_SPOT_DELETED){
             Log.d(log,"spot deleted");
+        }
+
+        if ( requestCode == KML_REQUEST ){
+            switch (resultCode){
+                case KML_LOAD:
+                    Log.d(log,"KML_LOAD");
+                    Bundle bundle = data.getExtras();
+                    if (bundle != null){
+                        if (bundle.containsKey(KML_FILE)){
+                            kmlFile = new Gson().fromJson(bundle.getString(KML_FILE,""),File.class);
+                            Log.d(log,kmlFile.getName() + " parsed to KmlDocument");
+                        }
+                    }
+                    break;
+                case KML_REMOVE:
+                    Log.d(log,"KML_REMOVE");
+                    removeKMLOverlay();
+                    kmlFile = null;
+                    break;
+            }
         }
     }
 
@@ -182,6 +235,27 @@ public class MainActivity extends AppCompatActivity implements MapEventsReceiver
         map.invalidate();
     }
 
+    private void createKMLOverlay() {
+        if ( kmlFile != null ) {
+            KmlDocument kmlDocument = new KmlDocument();
+            kmlDocument.parseKMLFile(kmlFile);
+            kmlOverlay = (FolderOverlay) kmlDocument.mKmlRoot.buildOverlay(map, null, null, kmlDocument);
+            map.getOverlays().add(kmlOverlay);
+            map.invalidate();
+            Log.d(log,"kml overlay created");
+        }
+    }
+
+    private void removeKMLOverlay() {
+        if ( kmlFile != null ){
+            if (map.getOverlays().contains(kmlOverlay)){
+                map.getOverlays().remove(kmlOverlay);
+                map.invalidate();
+                Log.d(log,"kml overlay removed");
+            }
+        }
+    }
+
     private void setFab() {
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -260,6 +334,9 @@ public class MainActivity extends AppCompatActivity implements MapEventsReceiver
                     startActivityForResult(newSpotIntent, NEW_SPOT_REQUEST);
                 }
                 break;
+            case R.id.action_kml:
+                Intent kmlIntent = new Intent(this,KMLActivity.class);
+                startActivityForResult(kmlIntent,KML_REQUEST );
         }
         return super.onOptionsItemSelected(item);
     }

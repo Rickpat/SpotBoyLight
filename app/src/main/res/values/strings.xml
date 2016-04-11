@@ -33,4 +33,8 @@
     <string name="new_notes_dialog_title">set new notes</string>
     <string name="action_delete">delete</string>
     <string name="spot_deleted_message">spot deleted</string>
+    <string name="activity_kml_title">KML</string>
+    <string name="kml_load_button">load KML from file</string>
+    <string name="kml_remove_button">remove current KML</string>
+    <string name="action_kml">KML</string>
 </resources>

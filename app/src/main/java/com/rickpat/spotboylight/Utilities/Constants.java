@@ -12,6 +12,7 @@ public class Constants {
     public static final String NO_GPS = "NO_GPS";
     public static final String SPOT = "SPOT";
     public static final String TIME_FORMAT = "HH:mm";
+    public static final String KML_FILE = "KML_FILE";
 
     public static final int NEW_SPOT_REQUEST = 101;
     public static final int NEW_SPOT_CREATED = 102;
@@ -22,4 +23,8 @@ public class Constants {
 
     public static final int HUB_REQUEST = 301;
     public static final int HUB_SHOW_ON_MAP = 302;
+
+    public static final int KML_REQUEST = 401;
+    public static final int KML_LOAD = 402;
+    public static final int KML_REMOVE = 403;
 }
