@@ -1,12 +1,10 @@
 package com.rickpat.spotboylight;
 
 import android.content.DialogInterface;
-import android.graphics.Bitmap;
-import android.graphics.Point;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
-import android.os.Build;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.view.PagerAdapter;
+import android.support.v4.view.ViewPager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -22,30 +20,46 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.gson.Gson;
+import com.rickpat.spotboylight.Utilities.ScreenSlidePagerAdapter;
 import com.rickpat.spotboylight.Utilities.Utilities;
+import com.rickpat.spotboylight.fragments.GalleryItemFragment;
 import com.rickpat.spotboylight.spotboy_db.SpotLocal;
 import com.rickpat.spotboylight.spotboy_db.SpotBoyDBHelper;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.List;
 import java.util.Locale;
+import java.util.Set;
+import java.util.Vector;
 
 import static com.rickpat.spotboylight.Utilities.Constants.*;
 
-public class InfoActivity extends AppCompatActivity {
+public class InfoActivity2 extends AppCompatActivity {
 
     private SpotLocal spot;
 
-    private String log="InfoActivity";
+    private String log="InfoActivity2";
 
     private AlertDialog catAlertDialog;
     private AlertDialog notesAlertDialog;
 
+    private ViewPager mPager;
+
+    @Override   //after onPause
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+    }
 
     @Override
+    protected void onPause() {
+        super.onPause();
+    }
+
+    @Override   //first call
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_info);
+        setContentView(R.layout.activity_info2);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_info);
         setSupportActionBar(toolbar);
@@ -61,17 +75,46 @@ public class InfoActivity extends AppCompatActivity {
         }else {
             finish();
         }
-
+        mPager = (ViewPager) findViewById(R.id.info_viewPager);
         setContent();
         setDialogs();
+    }
+
+    @Override   //after onCreate if screen orientation changed
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+    }
+
+    @Override   //after onCreate or onRestoreInstanceState
+    protected void onStart() {
+        super.onStart();
+        setViewPagerContent();
+    }
+
+    private void setViewPagerContent() {
+        List<Fragment> viewPagerFragments = new Vector<>(VIEW_PAGER_MAX_FRAGMENTS);
+        for ( String url : spot.getFileStringList() ){
+            Bundle page = new Bundle();
+            page.putString(IMG_PATH, url);
+            Log.d(log,"adding fragment for img: " + url);
+            viewPagerFragments.add(Fragment.instantiate(this, GalleryItemFragment.class.getName(), page));
+        }
+
+        //after adding all the fragments write the below lines
+
+        PagerAdapter mPagerAdapter = new ScreenSlidePagerAdapter(getSupportFragmentManager(), viewPagerFragments);
+
+        mPager.setAdapter(mPagerAdapter);
+    }
+
+    @Override   //after onStart
+    protected void onResume() {
+        super.onResume();
     }
 
     private void setContent() {
         ((TextView)findViewById(R.id.info_catTextView)).setText(spot.getSpotType().toString());
         ((TextView)findViewById(R.id.info_notesTextView)).setText(spot.getNotes());
-        if (spot.getUri() != null){
-            setImage();
-        }
 
         DateFormat df = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.GERMAN);
         ((TextView)findViewById(R.id.info_dateTextView)).setText(df.format(spot.getDate()));
@@ -92,20 +135,6 @@ public class InfoActivity extends AppCompatActivity {
             }
         });
 
-    }
-
-    private void setImage() {
-        Display display = getWindowManager().getDefaultDisplay();
-        Point point = new Point();
-        display.getSize(point);
-        int displayW = point.x;
-        Bitmap bitmap = Utilities.decodeSampledBitmapFromResource(getResources(),spot.getUri(),displayW,500);
-        Drawable drawable = new BitmapDrawable(getResources(),bitmap);
-        ImageView imageView = (ImageView)findViewById(R.id.info_imageView);
-        imageView.setImageDrawable(drawable);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            imageView.setBackground(null);
-        }
     }
 
     private void setDialogs() {
@@ -131,8 +160,8 @@ public class InfoActivity extends AppCompatActivity {
                         Object object = listView.getAdapter().getItem(listView.getCheckedItemPosition());
                         String selection = (String) object;
                         spot.setSpotType(Utilities.parseSpotTypeString(selection));
-                        SpotBoyDBHelper spotBoyDBHelper = new SpotBoyDBHelper(InfoActivity.this, null, null, 1);
-                        long dbResult = spotBoyDBHelper.updateSpot(spot);
+                        SpotBoyDBHelper spotBoyDBHelper = new SpotBoyDBHelper(InfoActivity2.this, null, null, 1);
+                        long dbResult = spotBoyDBHelper.updateSpotMultipleImages(spot);
                         if (dbResult > 0) {
                             ((TextView) findViewById(R.id.info_catTextView)).setText(selection);
                         }
@@ -152,8 +181,8 @@ public class InfoActivity extends AppCompatActivity {
                         String notes = editText.getText().toString().trim();
                         Log.d(log,"new notes: " + notes);
                         spot.setNotes(notes);
-                        SpotBoyDBHelper spotBoyDBHelper = new SpotBoyDBHelper(InfoActivity.this, null, null, 1);
-                        long dbResult = spotBoyDBHelper.updateSpot(spot);
+                        SpotBoyDBHelper spotBoyDBHelper = new SpotBoyDBHelper(InfoActivity2.this, null, null, 1);
+                        long dbResult = spotBoyDBHelper.updateSpotMultipleImages(spot);
                         if (dbResult > 0) {
                             ((TextView) findViewById(R.id.info_notesTextView)).setText(notes);
                         }
@@ -182,7 +211,7 @@ public class InfoActivity extends AppCompatActivity {
                 onBackPressed();
                 return true;
             case R.id.action_delete:
-                SpotBoyDBHelper spotBoyDBHelper = new SpotBoyDBHelper(InfoActivity.this, null, null, 1);
+                SpotBoyDBHelper spotBoyDBHelper = new SpotBoyDBHelper(InfoActivity2.this, null, null, 1);
                 long dbResult = spotBoyDBHelper.deleteSpot(Integer.valueOf(spot.getId()));
                 if (dbResult > 0){
                     Toast.makeText(this,getString(R.string.spot_deleted_message),Toast.LENGTH_SHORT).show();

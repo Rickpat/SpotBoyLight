@@ -11,6 +11,7 @@ import android.view.MenuItem;
 
 import com.google.gson.Gson;
 import com.rickpat.spotboylight.spotboy_db.Spot;
+import com.rickpat.spotboylight.spotboy_db.SpotLocal;
 import com.rickpat.spotboylight.spotboy_db.SpotBoyDBHelper;
 
 import static com.rickpat.spotboylight.Utilities.Constants.HUB_SHOW_ON_MAP;

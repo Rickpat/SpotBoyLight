@@ -15,10 +15,9 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.RequestManager;
 import com.rickpat.spotboylight.Utilities.Utilities;
 import com.rickpat.spotboylight.spotboy_db.Spot;
+import com.rickpat.spotboylight.spotboy_db.SpotLocal;
 
 import java.util.List;
 
@@ -69,7 +68,7 @@ public class SpotHubAdapter extends RecyclerView.Adapter<SpotHubAdapter.ViewHold
     public void onBindViewHolder(ViewHolder holder, int position) {
 
         final Spot spot = spotList.get(position);
-        holder.catTextView.setText(spot.getCategory());
+        holder.catTextView.setText(spot.getSpotType().toString());
 
         if (spot.getUri() != null) {
             Bitmap bitmap = Utilities.decodeSampledBitmapFromResource(resources, spot.getUri(), this.displayW-50, 350);

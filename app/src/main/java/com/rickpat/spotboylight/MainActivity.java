@@ -17,7 +17,7 @@ import android.view.MenuItem;
 
 import com.rickpat.spotboylight.Utilities.SpotType;
 import com.rickpat.spotboylight.Utilities.Utilities;
-import com.rickpat.spotboylight.spotboy_db.Spot;
+import com.rickpat.spotboylight.spotboy_db.SpotLocal;
 import com.rickpat.spotboylight.spotboy_db.SpotBoyDBHelper;
 import com.google.gson.Gson;
 
@@ -61,7 +61,7 @@ public class MainActivity extends AppCompatActivity implements MapEventsReceiver
                 editor.remove(KML_FILE);
             }
         }
-        editor.putString(GEO_POINT, new Gson().toJson(map.getMapCenter()));
+        editor.putString(GEOPOINT, new Gson().toJson(map.getMapCenter()));
         editor.putInt(ZOOM_LEVEL, map.getZoomLevel());
         editor.apply();
     }
@@ -74,7 +74,7 @@ public class MainActivity extends AppCompatActivity implements MapEventsReceiver
         if (preferences.contains(KML_FILE)){
             kmlFile = new Gson().fromJson(preferences.getString(KML_FILE,""),File.class);
         }
-        map.getController().setCenter(new Gson().fromJson(preferences.getString(GEO_POINT, ""), GeoPoint.class));
+        map.getController().setCenter(new Gson().fromJson(preferences.getString(GEOPOINT, ""), GeoPoint.class));
         map.getController().setZoom(preferences.getInt(ZOOM_LEVEL, 18));
     }
 
@@ -126,7 +126,7 @@ public class MainActivity extends AppCompatActivity implements MapEventsReceiver
         if ( requestCode == HUB_REQUEST && resultCode == HUB_SHOW_ON_MAP){
             Bundle bundle = data.getExtras();
             if (bundle.containsKey(SPOT)){
-                Spot spot = new Gson().fromJson(bundle.getString(SPOT),Spot.class);
+                SpotLocal spot = new Gson().fromJson(bundle.getString(SPOT),SpotLocal.class);
                 Log.d(log,"received spot with id: " + spot.getId());
                 map.getController().animateTo(spot.getGeoPoint());
             }
@@ -206,8 +206,8 @@ public class MainActivity extends AppCompatActivity implements MapEventsReceiver
 
     private void setMarkerCluster() {
         SpotBoyDBHelper spotBoyDBHelper = new SpotBoyDBHelper(this, null, null, 1);
-        List<Spot> spotList = spotBoyDBHelper.getSpotList();
-        if (spotList.size()>0){
+        List<SpotLocal> spotList = spotBoyDBHelper.getSpotListMultipleImages();
+        if ( spotList.size() > 0 ){
             map.getController().animateTo(spotList.get(spotList.size()-1).getGeoPoint());
         }
         clusterHashMap = new HashMap<>();
@@ -217,10 +217,10 @@ public class MainActivity extends AppCompatActivity implements MapEventsReceiver
             spotCluster.setIcon(Utilities.getClusterIcon(getApplicationContext(), spotType));
             clusterHashMap.put(spotType, spotCluster);
         }
-        for (Spot spot : spotList){
-            Log.d(log, "Spot id: " + spot.getId() + " type: " + spot.getSpotType());
+        for (SpotLocal spot : spotList){
+            Log.d(log, "SpotLocal id: " + spot.getId() + " type: " + spot.getSpotType());
             if (spot.getSpotType() == null){
-                spotBoyDBHelper.deleteSpot(spot.getId());
+                spotBoyDBHelper.deleteSpot(Integer.valueOf(spot.getId()));
             }
             SpotMarker spotMarker = new SpotMarker(map, spot);
             spotMarker.setIcon(Utilities.getMarkerIcon(getApplicationContext(),spot.getSpotType()));
@@ -328,9 +328,11 @@ public class MainActivity extends AppCompatActivity implements MapEventsReceiver
                 startActivityForResult(hubIntent,HUB_REQUEST);
                 break;
             case R.id.action_new:
-                if (myPositionOverlay.getMyLocation() != null) {
-                    Intent newSpotIntent = new Intent(this, NewActivity.class);
-                    newSpotIntent.putExtra(COORDINATES, new Gson().toJson(myPositionOverlay.getMyLocation()));
+                GeoPoint geoPoint = myPositionOverlay.getMyLocation();
+                if ( geoPoint != null) {
+                    Log.d(log,"starting NewActivity2 with geoPoint: " + geoPoint);
+                    Intent newSpotIntent = new Intent(this, NewActivity2.class);
+                    newSpotIntent.putExtra(GEOPOINT, new Gson().toJson(geoPoint));
                     startActivityForResult(newSpotIntent, NEW_SPOT_REQUEST);
                 }
                 break;
@@ -371,7 +373,7 @@ public class MainActivity extends AppCompatActivity implements MapEventsReceiver
                     public void onClick(DialogInterface dialog, int which) {
                         if (p != null) {
                             Intent newSpotIntent = new Intent(MainActivity.this, NewActivity.class);
-                            newSpotIntent.putExtra(COORDINATES, new Gson().toJson(p));
+                            newSpotIntent.putExtra(GEOPOINT, new Gson().toJson(p));
                             startActivityForResult(newSpotIntent, NEW_SPOT_REQUEST);
                         }
                     }
@@ -381,9 +383,9 @@ public class MainActivity extends AppCompatActivity implements MapEventsReceiver
     }
 
     @Override
-    public void infoCallback(Spot spot) {
+    public void infoCallback(SpotLocal spot) {
         closeAllInfoWindows();
-        Intent infoIntent = new Intent(this,InfoActivity.class);
+        Intent infoIntent = new Intent(this,InfoActivity2.class);
         infoIntent.putExtra(SPOT,new Gson().toJson(spot));
         startActivityForResult(infoIntent,INFO_ACTIVITY_REQUEST);
     }

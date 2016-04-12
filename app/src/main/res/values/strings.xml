@@ -37,4 +37,5 @@
     <string name="kml_load_button">load KML from file</string>
     <string name="kml_remove_button">remove current KML</string>
     <string name="action_kml">KML</string>
+    <string name="local_db_error_message">database error</string>
 </resources>
