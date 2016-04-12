@@ -1,6 +1,7 @@
 package com.rickpat.spotboylight;
 
 import android.content.DialogInterface;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.PagerAdapter;
@@ -40,6 +41,7 @@ public class InfoActivity2 extends AppCompatActivity {
     private SpotLocal spot;
 
     private String log="InfoActivity2";
+    private boolean modified = false;
 
     private AlertDialog catAlertDialog;
     private AlertDialog notesAlertDialog;
@@ -49,17 +51,23 @@ public class InfoActivity2 extends AppCompatActivity {
     @Override   //after onPause
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
+        Log.d(log, "onSaveInstanceState");
+        SharedPreferences.Editor editor = getSharedPreferences(PREFERENCES,MODE_PRIVATE).edit();
+        editor.putBoolean(MODIFIED,modified);
+        editor.apply();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
+        Log.d(log, "onPause");
     }
 
     @Override   //first call
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_info2);
+        Log.d(log, "onCreate");
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_info);
         setSupportActionBar(toolbar);
@@ -76,18 +84,36 @@ public class InfoActivity2 extends AppCompatActivity {
             finish();
         }
         mPager = (ViewPager) findViewById(R.id.info_viewPager);
-        setContent();
-        setDialogs();
-    }
-
-    @Override   //after onCreate if screen orientation changed
-    protected void onRestoreInstanceState(Bundle savedInstanceState) {
-        super.onRestoreInstanceState(savedInstanceState);
     }
 
     @Override   //after onCreate or onRestoreInstanceState
     protected void onStart() {
         super.onStart();
+        Log.d(log, "onStart");
+        //next onRestoreInstance... or onResume
+    }
+
+    @Override   //after onCreate if screen orientation changed
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        Log.d(log, "onRestoreInstanceState");
+        SharedPreferences preferences = getSharedPreferences(PREFERENCES, MODE_PRIVATE);
+        modified = preferences.getBoolean(MODIFIED,false);
+        if (modified){
+            SpotBoyDBHelper spotBoyDBHelper = new SpotBoyDBHelper(InfoActivity2.this, null, null, 1);
+            spot = spotBoyDBHelper.getMultipleImagesSpot(spot.getId());
+            Log.d(log, "spot refreshed spotType: " + spot.getSpotType());
+        }
+
+        //next onResume
+    }
+
+    @Override   //after onStart or onRestoreInstance...
+    protected void onResume() {
+        super.onResume();
+        Log.d(log, "onResume");
+        setContent();
+        setDialogs();
         setViewPagerContent();
     }
 
@@ -107,13 +133,9 @@ public class InfoActivity2 extends AppCompatActivity {
         mPager.setAdapter(mPagerAdapter);
     }
 
-    @Override   //after onStart
-    protected void onResume() {
-        super.onResume();
-    }
-
     private void setContent() {
-        ((TextView)findViewById(R.id.info_catTextView)).setText(spot.getSpotType().toString());
+        Log.d(log,"setContent: spot spotType " + spot.getSpotType() );
+        ((TextView) findViewById(R.id.info_catTextView)).setText(spot.getSpotType().toString());
         ((TextView)findViewById(R.id.info_notesTextView)).setText(spot.getNotes());
 
         DateFormat df = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.GERMAN);
@@ -164,6 +186,7 @@ public class InfoActivity2 extends AppCompatActivity {
                         long dbResult = spotBoyDBHelper.updateSpotMultipleImages(spot);
                         if (dbResult > 0) {
                             ((TextView) findViewById(R.id.info_catTextView)).setText(selection);
+                            modified = true;
                         }
                     }
                 }).create();
@@ -185,6 +208,7 @@ public class InfoActivity2 extends AppCompatActivity {
                         long dbResult = spotBoyDBHelper.updateSpotMultipleImages(spot);
                         if (dbResult > 0) {
                             ((TextView) findViewById(R.id.info_notesTextView)).setText(notes);
+                            modified = true;
                         }
                     }
                 }).setNegativeButton(getText(R.string.cancel), new DialogInterface.OnClickListener() {
@@ -208,6 +232,11 @@ public class InfoActivity2 extends AppCompatActivity {
             case android.R.id.home:
                 // this takes the user 'back', as if they pressed the left-facing triangle icon on the main android toolbar.
                 // if this doesn't work as desired, another possibility is to call `finish()` here.
+                if (modified){
+                    setResult(INFO_ACTIVITY_SPOT_MODIFIED);
+                    finish();
+                }
+
                 onBackPressed();
                 return true;
             case R.id.action_delete:

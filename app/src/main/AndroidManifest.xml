@@ -56,6 +56,13 @@
         </activity>
 
         <activity
+            android:name=".HubActivity2"
+            android:label="@string/activity_hub_title"
+            android:theme="@style/AppTheme.NoActionBar">
+
+        </activity>
+
+        <activity
             android:name=".InfoActivity"
             android:label="@string/activity_info_title"
             android:theme="@style/AppTheme.NoActionBar">

@@ -131,8 +131,14 @@ public class MainActivity extends AppCompatActivity implements MapEventsReceiver
                 map.getController().animateTo(spot.getGeoPoint());
             }
         }
-        if ( requestCode == INFO_ACTIVITY_REQUEST && resultCode == INFO_ACTIVITY_SPOT_DELETED){
-            Log.d(log,"spot deleted");
+        if ( requestCode == INFO_ACTIVITY_REQUEST){
+            switch (resultCode){
+                case INFO_ACTIVITY_SPOT_MODIFIED:
+                    Log.d(log,"spot modified");
+                    break;
+                case INFO_ACTIVITY_SPOT_DELETED:
+                    Log.d(log,"spot deleted");
+            }
         }
 
         if ( requestCode == KML_REQUEST ){
@@ -324,7 +330,7 @@ public class MainActivity extends AppCompatActivity implements MapEventsReceiver
                 startActivity(intent);
                 break;
             case R.id.action_hub:
-                Intent hubIntent = new Intent(this, HubActivity.class);
+                Intent hubIntent = new Intent(this, HubActivity2.class);
                 startActivityForResult(hubIntent,HUB_REQUEST);
                 break;
             case R.id.action_new:

@@ -13,6 +13,7 @@ public class Constants {
     public static String PREFERENCES = "PREFERENCES";
     public static String GEOPOINT = "GEOPOINT";
     public static String ZOOM_LEVEL = "ZOOM_LEVEL";
+    public static String MODIFIED = "MODIFIED";
 
     public static final String TIME_FORMAT = "HH:mm";
     public static final String KML_FILE = "KML_FILE";
@@ -25,6 +26,7 @@ public class Constants {
 
     public static final int INFO_ACTIVITY_REQUEST = 201;
     public static final int INFO_ACTIVITY_SPOT_DELETED = 202;
+    public static final int INFO_ACTIVITY_SPOT_MODIFIED = 203;
 
     public static final int HUB_REQUEST = 301;
     public static final int HUB_SHOW_ON_MAP = 302;

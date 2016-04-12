@@ -79,7 +79,7 @@ public class SpotBoyDBHelper extends SQLiteOpenHelper {
     public List<Spot> getSpotList(){
         List<Spot> localList = new ArrayList<>();
 
-        Cursor cursor = db.query(TABLE_SPOTS,null,null,null,null,null,null);
+        Cursor cursor = db.query(TABLE_SPOTS, null, null, null, null, null, null);
         cursor.moveToFirst();
         int count = cursor.getCount();
         Log.d(log, "count: " + count);
@@ -102,6 +102,36 @@ public class SpotBoyDBHelper extends SQLiteOpenHelper {
         }
         cursor.close();
         return localList;
+    }
+
+    @SuppressWarnings("NullPointer")
+    public SpotLocal getMultipleImagesSpot( String mId ){
+
+        Type listType = new TypeToken<ArrayList<String>>() {
+        }.getType();
+
+        SpotLocal spot = null;
+        Cursor cursor = db.rawQuery("SELECT * FROM " + TABLE_SPOTS + " WHERE id="+mId,null);
+        cursor.moveToFirst();
+        int count = cursor.getCount();
+        Log.d(log, "count: " + count);
+        if ( count > 0 ){
+            String id = String.valueOf(cursor.getLong(0));
+            SpotType spotType = Utilities.parseSpotTypeString(cursor.getString(1));
+            String notes = cursor.getString(2);
+            List<String> uriList = new Gson().fromJson(cursor.getString(3), listType);
+            GeoPoint geoPoint = new Gson().fromJson(cursor.getString(4), GeoPoint.class);
+            Date date = new Date(cursor.getLong(5));
+            spot = new SpotLocal(id ,geoPoint, notes, date, spotType, uriList);
+
+            Log.d(log, "id " + id +
+                    "\ncat " + spotType +
+                    "\nnotes " + notes +
+                    "\nuri " + uriList.size() +
+                    "\ntime " + date);
+        }
+        cursor.close();
+        return spot;
     }
 
     public int deleteSpot( int id ){
