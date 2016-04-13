@@ -1,11 +1,7 @@
 package com.rickpat.spotboylight;
 
 import android.app.Activity;
-import android.content.res.Resources;
-import android.graphics.Bitmap;
 import android.graphics.Point;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.support.v7.widget.RecyclerView;
 import android.view.Display;
 import android.view.LayoutInflater;
@@ -15,21 +11,20 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.rickpat.spotboylight.Utilities.Utilities;
-import com.rickpat.spotboylight.spotboy_db.Spot;
+import com.bumptech.glide.Glide;
 import com.rickpat.spotboylight.spotboy_db.SpotLocal;
 
 import java.util.List;
 
 public class SpotHubAdapter extends RecyclerView.Adapter<SpotHubAdapter.ViewHolder> {
-    private List<Spot> spotList;
-    private Resources resources;
+    private List<SpotLocal> spotList;
     private int displayW;
     private IHubAdapter callback;
+    private Activity activity;
 
     public interface IHubAdapter{
-        void moreButtonCallback(Spot spot);
-        void markerButtonCallback(Spot spot);
+        void moreButtonCallback(SpotLocal spot);
+        void markerButtonCallback(SpotLocal spot);
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
@@ -46,14 +41,14 @@ public class SpotHubAdapter extends RecyclerView.Adapter<SpotHubAdapter.ViewHold
         }
     }
 
-    public SpotHubAdapter(List<Spot> spotList , Activity activity) {
+    public SpotHubAdapter(List<SpotLocal> spotList, Activity activity) {
 
         Display display = activity.getWindowManager().getDefaultDisplay();
         Point size = new Point();
         display.getSize(size);
 
         this.spotList = spotList;
-        this.resources = activity.getResources();
+        this.activity = activity;
         this.displayW = size.x;
         this.callback = (IHubAdapter)activity;
     }
@@ -67,14 +62,11 @@ public class SpotHubAdapter extends RecyclerView.Adapter<SpotHubAdapter.ViewHold
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
 
-        final Spot spot = spotList.get(position);
+        final SpotLocal spot = spotList.get(position);
         holder.catTextView.setText(spot.getSpotType().toString());
 
-        if (spot.getUri() != null) {
-            Bitmap bitmap = Utilities.decodeSampledBitmapFromResource(resources, spot.getUri(), this.displayW-50, 350);
-            Drawable drawable = new BitmapDrawable(resources, bitmap);
-            holder.imageView.setImageDrawable(drawable);
-
+        if (spot.getFileStringList().size() > 0 ){
+            Glide.with(activity).load(spot.getFileStringList().get(0)).override(this.displayW - 50, 350).into(holder.imageView);
         }
 
         holder.markerButton.setOnClickListener(new View.OnClickListener() {
@@ -99,7 +91,7 @@ public class SpotHubAdapter extends RecyclerView.Adapter<SpotHubAdapter.ViewHold
         return spotList.size();
     }
 
-    public void updateList(List<Spot> data) {
+    public void updateList(List<SpotLocal> data) {
         spotList = data;
         notifyDataSetChanged();
     }
