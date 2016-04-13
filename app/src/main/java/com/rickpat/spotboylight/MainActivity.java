@@ -17,7 +17,7 @@ import android.view.MenuItem;
 
 import com.rickpat.spotboylight.Utilities.SpotType;
 import com.rickpat.spotboylight.Utilities.Utilities;
-import com.rickpat.spotboylight.spotboy_db.SpotLocal;
+import com.rickpat.spotboylight.spotboy_db.Spot;
 import com.rickpat.spotboylight.spotboy_db.SpotBoyDBHelper;
 import com.google.gson.Gson;
 
@@ -126,7 +126,7 @@ public class MainActivity extends AppCompatActivity implements MapEventsReceiver
         if ( requestCode == HUB_REQUEST && resultCode == HUB_SHOW_ON_MAP){
             Bundle bundle = data.getExtras();
             if (bundle.containsKey(SPOT)){
-                SpotLocal spot = new Gson().fromJson(bundle.getString(SPOT),SpotLocal.class);
+                Spot spot = new Gson().fromJson(bundle.getString(SPOT),Spot.class);
                 Log.d(log,"received spot with id: " + spot.getId());
                 map.getController().animateTo(spot.getGeoPoint());
             }
@@ -212,7 +212,7 @@ public class MainActivity extends AppCompatActivity implements MapEventsReceiver
 
     private void setMarkerCluster() {
         SpotBoyDBHelper spotBoyDBHelper = new SpotBoyDBHelper(this, null, null, 1);
-        List<SpotLocal> spotList = spotBoyDBHelper.getSpotListMultipleImages();
+        List<Spot> spotList = spotBoyDBHelper.getSpotListMultipleImages();
         if ( spotList.size() > 0 ){
             map.getController().animateTo(spotList.get(spotList.size()-1).getGeoPoint());
         }
@@ -223,8 +223,8 @@ public class MainActivity extends AppCompatActivity implements MapEventsReceiver
             spotCluster.setIcon(Utilities.getClusterIcon(getApplicationContext(), spotType));
             clusterHashMap.put(spotType, spotCluster);
         }
-        for (SpotLocal spot : spotList){
-            Log.d(log, "SpotLocal id: " + spot.getId() + " type: " + spot.getSpotType());
+        for (Spot spot : spotList){
+            Log.d(log, "Spot id: " + spot.getId() + " type: " + spot.getSpotType());
             if (spot.getSpotType() == null){
                 spotBoyDBHelper.deleteSpot(Integer.valueOf(spot.getId()));
             }
@@ -389,7 +389,7 @@ public class MainActivity extends AppCompatActivity implements MapEventsReceiver
     }
 
     @Override
-    public void infoCallback(SpotLocal spot) {
+    public void infoCallback(Spot spot) {
         closeAllInfoWindows();
         Intent infoIntent = new Intent(this,InfoActivity.class);
         infoIntent.putExtra(SPOT,new Gson().toJson(spot));

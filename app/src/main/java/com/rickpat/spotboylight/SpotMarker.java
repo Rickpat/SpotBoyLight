@@ -1,22 +1,22 @@
 package com.rickpat.spotboylight;
 
 
-import com.rickpat.spotboylight.spotboy_db.SpotLocal;
+import com.rickpat.spotboylight.spotboy_db.Spot;
 
 import org.osmdroid.bonuspack.overlays.Marker;
 import org.osmdroid.views.MapView;
 
 public class SpotMarker extends Marker {
 
-    private SpotLocal spot;
+    private Spot spot;
 
-    public SpotMarker(MapView mapView, SpotLocal spot) {
+    public SpotMarker(MapView mapView, Spot spot) {
         super(mapView);
         this.spot = spot;
         this.setPosition(spot.getGeoPoint());
     }
 
-    public SpotLocal getSpot() {
+    public Spot getSpot() {
         return spot;
     }
 }

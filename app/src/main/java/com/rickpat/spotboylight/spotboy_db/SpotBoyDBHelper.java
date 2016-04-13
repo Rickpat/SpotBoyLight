@@ -33,7 +33,7 @@ public class SpotBoyDBHelper extends SQLiteOpenHelper {
     private static final String KEY_ID = "id";
     private static final String KEY_TYPE = "type";
     private static final String KEY_NOTES = "notes";
-    private static final String KEY_URI = "uri";
+    private static final String KEY_URI = "urlList";
     private static final String KEY_DATE = "date";
     private static final String KEY_GEO = "geo";
 
@@ -57,60 +57,13 @@ public class SpotBoyDBHelper extends SQLiteOpenHelper {
         onCreate(db);
     }
 
-    public long updateSpot(Spot local){
-        ContentValues values = new ContentValues();
-        values.put(KEY_TYPE, local.getSpotType().toString());
-        values.put(KEY_NOTES, local.getNotes());
-        values.put(KEY_URI, local.getUri());
-        values.put(KEY_DATE, String.valueOf(local.getDate().getTime()));
-        return db.update(TABLE_SPOTS, values, "id=" + local.getId(), null);
-    }
-
-    public long addSpot(Spot local) {
-        ContentValues values = new ContentValues();
-        values.put(KEY_TYPE, local.getSpotType().toString());
-        values.put(KEY_NOTES, local.getNotes());
-        values.put(KEY_URI, local.getUri());
-        values.put(KEY_GEO, new Gson().toJson(local.getGeoPoint()));
-        values.put(KEY_DATE, local.getDate().getTime());
-        return db.insert(TABLE_SPOTS, null, values);
-    }
-
-    public List<Spot> getSpotList(){
-        List<Spot> localList = new ArrayList<>();
-
-        Cursor cursor = db.query(TABLE_SPOTS, null, null, null, null, null, null);
-        cursor.moveToFirst();
-        int count = cursor.getCount();
-        Log.d(log, "count: " + count);
-        for (int i = 0 ; i < count ; i++){
-            String id = String.valueOf(cursor.getLong(0));
-            SpotType spotType = Utilities.parseSpotTypeString(cursor.getString(1));
-            String notes = cursor.getString(2);
-            String uri = cursor.getString(3);
-            GeoPoint geoPoint = new Gson().fromJson(cursor.getString(4), GeoPoint.class);
-            Date date = new Date(cursor.getLong(5));
-            SpotLocal local = new SpotLocal(id ,geoPoint, notes, uri, date, spotType);
-
-            Log.d(log, "id " + id +
-                    "\ncat " + spotType +
-                    "\nnotes " + notes +
-                    "\nuri " + uri +
-                    "\ntime " + date);
-            localList.add(local);
-            cursor.moveToNext();
-        }
-        cursor.close();
-        return localList;
-    }
-
     @SuppressWarnings("NullPointer")
-    public SpotLocal getMultipleImagesSpot( String mId ){
+    public Spot getMultipleImagesSpot( String mId ){
 
         Type listType = new TypeToken<ArrayList<String>>() {
         }.getType();
 
-        SpotLocal spot = null;
+        Spot spot = null;
         Cursor cursor = db.rawQuery("SELECT * FROM " + TABLE_SPOTS + " WHERE id="+mId,null);
         cursor.moveToFirst();
         int count = cursor.getCount();
@@ -119,15 +72,15 @@ public class SpotBoyDBHelper extends SQLiteOpenHelper {
             String id = String.valueOf(cursor.getLong(0));
             SpotType spotType = Utilities.parseSpotTypeString(cursor.getString(1));
             String notes = cursor.getString(2);
-            List<String> uriList = new Gson().fromJson(cursor.getString(3), listType);
+            List<String> urlList = new Gson().fromJson(cursor.getString(3), listType);
             GeoPoint geoPoint = new Gson().fromJson(cursor.getString(4), GeoPoint.class);
             Date date = new Date(cursor.getLong(5));
-            spot = new SpotLocal(id ,geoPoint, notes, date, spotType, uriList);
+            spot = new Spot(id,geoPoint,notes,urlList,date,spotType);
 
             Log.d(log, "id " + id +
                     "\ncat " + spotType +
                     "\nnotes " + notes +
-                    "\nuri " + uriList.size() +
+                    "\nuri " + urlList.size() +
                     "\ntime " + date);
         }
         cursor.close();
@@ -139,18 +92,18 @@ public class SpotBoyDBHelper extends SQLiteOpenHelper {
         return db.delete(TABLE_SPOTS,"id=" + id, null);
     }
 
-    public long addSpotMultipleImages( SpotLocal spot ){
+    public long addSpotMultipleImages( Spot spot ){
         ContentValues values = new ContentValues();
         values.put(KEY_TYPE, spot.getSpotType().toString());
         values.put(KEY_NOTES, spot.getNotes());
-        values.put(KEY_URI, new Gson().toJson(spot.getFileStringList()));
+        values.put(KEY_URI, new Gson().toJson(spot.getUrlList()));
         values.put(KEY_GEO, new Gson().toJson(spot.getGeoPoint()));
         values.put(KEY_DATE, spot.getDate().getTime());
         return db.insert(TABLE_SPOTS, null, values);
     }
 
-    public List<SpotLocal> getSpotListMultipleImages(){
-        List<SpotLocal> localList = new ArrayList<>();
+    public List<Spot> getSpotListMultipleImages(){
+        List<Spot> localList = new ArrayList<>();
 
         Type listType = new TypeToken<ArrayList<String>>() {
         }.getType();
@@ -163,28 +116,28 @@ public class SpotBoyDBHelper extends SQLiteOpenHelper {
             String id = String.valueOf(cursor.getLong(0));
             SpotType spotType = Utilities.parseSpotTypeString(cursor.getString(1));
             String notes = cursor.getString(2);
-            List<String> uriList = new Gson().fromJson(cursor.getString(3),listType);
+            List<String> urlList = new Gson().fromJson(cursor.getString(3), listType);
             GeoPoint geoPoint = new Gson().fromJson(cursor.getString(4), GeoPoint.class);
             Date date = new Date(cursor.getLong(5));
-            SpotLocal local = new SpotLocal(id ,geoPoint, notes, date, spotType, uriList);
+            Spot spot = new Spot(id,geoPoint,notes,urlList,date,spotType);
 
             Log.d(log, "id " + id +
                     "\ncat " + spotType +
                     "\nnotes " + notes +
-                    "\nuri " + uriList.size() +
+                    "\nuri " + urlList.size() +
                     "\ntime " + date);
-            localList.add(local);
+            localList.add(spot);
             cursor.moveToNext();
         }
         cursor.close();
         return localList;
     }
 
-    public long updateSpotMultipleImages(SpotLocal spot){
+    public long updateSpotMultipleImages(Spot spot){
         ContentValues values = new ContentValues();
         values.put(KEY_TYPE, spot.getSpotType().toString());
         values.put(KEY_NOTES, spot.getNotes());
-        values.put(KEY_URI, new Gson().toJson(spot.getFileStringList()));
+        values.put(KEY_URI, new Gson().toJson(spot.getUrlList()));
         values.put(KEY_DATE, String.valueOf(spot.getDate().getTime()));
         return db.update(TABLE_SPOTS, values, "id=" + spot.getId(), null);
     }

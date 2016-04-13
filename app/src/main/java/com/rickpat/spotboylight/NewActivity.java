@@ -27,7 +27,7 @@ import com.rickpat.spotboylight.Utilities.ScreenSlidePagerAdapter;
 import com.rickpat.spotboylight.Utilities.SpotType;
 import com.rickpat.spotboylight.Utilities.Utilities;
 import com.rickpat.spotboylight.fragments.GalleryItemFragment;
-import com.rickpat.spotboylight.spotboy_db.SpotLocal;
+import com.rickpat.spotboylight.spotboy_db.Spot;
 import com.rickpat.spotboylight.spotboy_db.SpotBoyDBHelper;
 import com.google.gson.Gson;
 
@@ -49,12 +49,8 @@ import static com.rickpat.spotboylight.Utilities.Constants.*;
 
 public class NewActivity extends AppCompatActivity implements View.OnClickListener {
 
-    private String PREF_SPOT_TYPE = "PREF_SPOT_TYPE";
-    private String PREF_NOTES = "PREF_NOTES";
-
     private AlertDialog catDialog;
     private GeoPoint geoPoint;
-    private static final int CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE = 100;
     private String log = "Offline_NewActivity";
 
     private ViewPager mPager;
@@ -215,11 +211,11 @@ public class NewActivity extends AppCompatActivity implements View.OnClickListen
         String cat = ((TextView)findViewById(R.id.new_spot_cat_textView)).getText().toString().trim();
         SpotType spotType = Utilities.parseSpotTypeString(cat);
         String notes = ((EditText)findViewById(R.id.new_spot_notes_editText)).getText().toString().trim();
-        List<String> arrList = new ArrayList<>();
-        arrList.addAll(uriSet);
-        SpotLocal spotLocal = new SpotLocal("", geoPoint, notes, new Date(),spotType, arrList);
+        List<String> urlList = new ArrayList<>();
+        urlList.addAll(uriSet);
+        Spot spot = new Spot("",geoPoint,notes,urlList,new Date(),spotType);
 
-        return local_db.addSpotMultipleImages(spotLocal);
+        return local_db.addSpotMultipleImages(spot);
     }
 
     private void createDialogs() {

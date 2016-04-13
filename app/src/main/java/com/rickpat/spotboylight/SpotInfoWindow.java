@@ -1,10 +1,6 @@
 package com.rickpat.spotboylight;
 
 import android.app.Activity;
-import android.content.res.Resources;
-import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -12,8 +8,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
-import com.rickpat.spotboylight.Utilities.Utilities;
-import com.rickpat.spotboylight.spotboy_db.SpotLocal;
+import com.rickpat.spotboylight.spotboy_db.Spot;
 
 import org.osmdroid.bonuspack.overlays.InfoWindow;
 import org.osmdroid.views.MapView;
@@ -28,7 +23,7 @@ public class SpotInfoWindow extends InfoWindow {
     private Activity activity;
 
     public interface InfoCallback{
-        void infoCallback(SpotLocal spot);
+        void infoCallback(Spot spot);
     }
 
     public SpotInfoWindow(int layoutResId, MapView mapView , Activity activity) {
@@ -48,9 +43,9 @@ public class SpotInfoWindow extends InfoWindow {
 
         DateFormat df = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.GERMAN);
 
-        if ( myMarker.getSpot().getFileStringList() != null){
-            if (myMarker.getSpot().getFileStringList().size() > 0 ){
-                Glide.with(activity).load(myMarker.getSpot().getFileStringList().get(0)).override(300,200).into(imageView);
+        if ( myMarker.getSpot().getUrlList() != null){
+            if (myMarker.getSpot().getUrlList().size() > 0 ){
+                Glide.with(activity).load(myMarker.getSpot().getUrlList().get(0)).override(300,200).into(imageView);
             }
         }else {
             Log.d("SPOT_INFO_WINDOW", "list is null");

@@ -11,11 +11,14 @@ public class Constants {
     public static final String SPOT = "SPOT";
 
     public static String PREFERENCES = "PREFERENCES";
+    public static String PREF_SPOT_TYPE = "PREF_SPOT_TYPE";
+    public static String PREF_NOTES = "PREF_NOTES";
     public static String GEOPOINT = "GEOPOINT";
     public static String ZOOM_LEVEL = "ZOOM_LEVEL";
     public static String MODIFIED = "MODIFIED";
 
     public static final String TIME_FORMAT = "HH:mm";
+    public static final String TIME_FORMAT_INFO = "EEE, dd MMM yyyy HH:mm:ss z";
     public static final String KML_FILE = "KML_FILE";
 
     public static final int CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE = 100;

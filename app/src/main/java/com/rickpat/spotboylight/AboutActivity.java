@@ -15,7 +15,7 @@ import com.rickpat.spotboylight.Utilities.Utilities;
 
 import me.grantland.widget.AutofitTextView;
 
-public class AboutActivity extends AppCompatActivity {
+public class AboutActivity extends AppCompatActivity implements View.OnClickListener {
 
     AlertDialog librariesDialog;
 
@@ -30,16 +30,16 @@ public class AboutActivity extends AppCompatActivity {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }catch (NullPointerException e){}
         getSupportActionBar().setDisplayShowHomeEnabled(true);
-
-
         setFont();
         createDialog();
-        findViewById(R.id.about_libraries_button).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                librariesDialog.show();
-            }
-        });
+        findViewById(R.id.about_libraries_button).setOnClickListener(this);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        setFont();
+        createDialog();
     }
 
     private void setFont() {
@@ -71,6 +71,15 @@ public class AboutActivity extends AppCompatActivity {
 
             default:
                 return super.onOptionsItemSelected(item);
+        }
+    }
+
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()){
+            case R.id.about_libraries_button:
+                librariesDialog.show();
+                break;
         }
     }
 }
