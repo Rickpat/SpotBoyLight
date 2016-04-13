@@ -8,6 +8,9 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.support.v4.app.Fragment;
+import android.support.v4.view.PagerAdapter;
+import android.support.v4.view.ViewPager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -16,14 +19,14 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.bumptech.glide.Glide;
+import com.rickpat.spotboylight.Utilities.ScreenSlidePagerAdapter;
 import com.rickpat.spotboylight.Utilities.SpotType;
 import com.rickpat.spotboylight.Utilities.Utilities;
+import com.rickpat.spotboylight.fragments.GalleryItemFragment;
 import com.rickpat.spotboylight.spotboy_db.SpotLocal;
 import com.rickpat.spotboylight.spotboy_db.SpotBoyDBHelper;
 import com.google.gson.Gson;
@@ -32,24 +35,40 @@ import org.osmdroid.util.GeoPoint;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
+import java.util.Vector;
 
 import static com.rickpat.spotboylight.Utilities.Constants.*;
 
+/* this activity supports multiple image storage up to as many pictures you want */
+
 public class NewActivity extends AppCompatActivity implements View.OnClickListener {
 
+    private String PREF_SPOT_TYPE = "PREF_SPOT_TYPE";
+    private String PREF_NOTES = "PREF_NOTES";
+
     private AlertDialog catDialog;
-    private ImageView imageView;
     private GeoPoint geoPoint;
-    private Uri fileUri;
+    private static final int CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE = 100;
+    private String log = "Offline_NewActivity";
 
+    private ViewPager mPager;
 
-    private String log = "NewActivity";
+    private Set<String> uriSet;
+    private List<Fragment> viewPagerFragments;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.d(log, "onCreate");
         setContentView(R.layout.activity_new);
+
+        uriSet = new HashSet<>();
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_new);
         setSupportActionBar(toolbar);
@@ -66,42 +85,55 @@ public class NewActivity extends AppCompatActivity implements View.OnClickListen
         }
         findViewById(R.id.new_spot_cat_layout).setOnClickListener(this);
         findViewById(R.id.new_spot_fab_photo).setOnClickListener(this);
-        imageView = (ImageView) findViewById(R.id.new_spot_imageView);
+
+
+        mPager = (ViewPager) findViewById(R.id.new_spot_viewPager);
         createDialogs();
     }
 
-    @Override
+    @Override       //After onStart... but not on first start
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
+        Log.d(log, "onRestoreInstanceState");
         SharedPreferences preferences = getSharedPreferences(PREFERENCES, MODE_PRIVATE);
-        String path = preferences.getString(IMG_PATH, "zero");
-        geoPoint = new Gson().fromJson(preferences.getString(GEOPOINT,"zero"),GeoPoint.class);
-        if (path != "zero") {
-            fileUri = Uri.parse(path);
-            Glide.with(this).load(fileUri.getEncodedPath()).into(imageView);
-        }
-        ((TextView) findViewById(R.id.new_spot_cat_textView)).setText(preferences.getString(SPOT_TYPE, ""));
-        ((EditText) findViewById(R.id.new_spot_notes_editText)).setText(preferences.getString(NOTES, ""));
-
+        geoPoint = new Gson().fromJson(preferences.getString(GEOPOINT, "zero"), GeoPoint.class);
+        ((TextView) findViewById(R.id.new_spot_cat_textView)).setText(preferences.getString(PREF_SPOT_TYPE, ""));
+        ((EditText) findViewById(R.id.new_spot_notes_editText)).setText(preferences.getString(PREF_NOTES, ""));
+        uriSet = preferences.getStringSet(URI_SET, new HashSet<String>());
+        printSet(uriSet);
+        setViewPagerContent();
     }
 
-    @Override
+    private void printSet(Set<String> uriSet) {
+        for (String anUriSet : uriSet) {
+            Log.d(log, "uri: " + anUriSet + " saved");
+        }
+    }
+
+    @Override       //After onPause
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
+        Log.d(log, "onSaveInstanceState");
         SharedPreferences preferences = getSharedPreferences(PREFERENCES, MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
-        editor.putString(SPOT_TYPE, ((TextView) findViewById(R.id.new_spot_cat_textView)).getText().toString().trim());
-        editor.putString(NOTES, ((EditText) findViewById(R.id.new_spot_notes_editText)).getText().toString().trim());
+        editor.putStringSet(URI_SET,uriSet);
+        editor.putString(PREF_SPOT_TYPE, ((TextView) findViewById(R.id.new_spot_cat_textView)).getText().toString().trim());
+        editor.putString(PREF_NOTES, ((EditText) findViewById(R.id.new_spot_notes_editText)).getText().toString().trim());
         editor.putString(GEOPOINT, new Gson().toJson(geoPoint));
-        if (fileUri != null) {
-            editor.putString(IMG_PATH, fileUri.getEncodedPath());
-        } else {
-            editor.remove(IMG_PATH);
-        }
         editor.apply();
     }
 
+    @Override   //After onCreate
+    protected void onStart() {
+        super.onStart();
+        Log.d(log, "onStart");
+        viewPagerFragments = new Vector<>(VIEW_PAGER_MAX_FRAGMENTS);
+
+        setViewPagerContent();
+    }
+
     private Uri getOutputMediaFileUri() {
+        Log.d(log, "getOutputMediaFileUri");
         return Uri.fromFile(getOutputMediaFile());
     }
 
@@ -112,18 +144,17 @@ public class NewActivity extends AppCompatActivity implements View.OnClickListen
 
         if (!mediaStorageDir.exists()) {
             if (!mediaStorageDir.mkdirs()) {
-                Log.d("MyCameraApp", "failed to create directory");
                 return null;
             }
         }
 
-        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.ENGLISH).format(new Date());
         File mediaFile;
         mediaFile = new File(mediaStorageDir.getPath() + File.separator + "IMG_" + timeStamp + ".jpg");
         return mediaFile;
     }
 
-    @Override
+    @Override       //After onRestoreInstanceState
     public boolean onCreateOptionsMenu(Menu menu) {
         Log.d(log,"onCreateOptionsMenu");
         getMenuInflater().inflate(R.menu.menu_new, menu);
@@ -136,19 +167,20 @@ public class NewActivity extends AppCompatActivity implements View.OnClickListen
         Log.d(log,"onOptionsItemSelected");
         switch (item.getItemId()) {
             case android.R.id.home:
-                // this takes the user 'back', as if they pressed the left-facing triangle icon on the main android toolbar.
-                // if this doesn't work as desired, another possibility is to call `finish()` here.
+                Log.d(log,"onOptionsItemSelected HOME");
                 onBackPressed();
                 return true;
             case R.id.action_create:
                 long result = createDBEntry();
-                if (result > 0 ){
+                //result = id of the created row
+                if ( result > 0 ){
+                    Log.d(log,"onOptionsMenuItem CREATE OK" );
                     int resultCode = result>0?NEW_SPOT_CREATED:NEW_SPOT_CANCELED;
                     Intent returnIntent = new Intent();
                     setResult(resultCode, returnIntent);
                     finish();
                 }else {
-                    Toast.makeText(this,"something's missing",Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this,getString(R.string.local_db_error_message),Toast.LENGTH_SHORT).show();
                 }
             default:
                 return super.onOptionsItemSelected(item);
@@ -162,28 +194,32 @@ public class NewActivity extends AppCompatActivity implements View.OnClickListen
                 catDialog.show();
                 break;
             case R.id.new_spot_fab_photo:
-                fileUri = getOutputMediaFileUri();
-                Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                intent.putExtra(MediaStore.EXTRA_OUTPUT, fileUri);
-                startActivityForResult(intent, CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE);
+                Log.d(log,"onClick FAB");
+                if ( uriSet.size() < 3 ){
+                    Log.d(log, "adding new uri to list + starting camera");
+                    Uri uri = getOutputMediaFileUri();
+                    uriSet.add(uri.getEncodedPath());
+                    Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                    intent.putExtra(MediaStore.EXTRA_OUTPUT, uri);
+
+                    startActivityForResult(intent, CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE);
+                }else {
+                    Log.d(log, "list is full");
+                }
                 break;
         }
     }
 
     private long createDBEntry() {
-        SpotBoyDBHelper db = new SpotBoyDBHelper(getApplicationContext(), null, null, 0);
+        SpotBoyDBHelper local_db = new SpotBoyDBHelper(getApplicationContext(), null, null, 0);
         String cat = ((TextView)findViewById(R.id.new_spot_cat_textView)).getText().toString().trim();
         SpotType spotType = Utilities.parseSpotTypeString(cat);
-        String lat = String.valueOf(geoPoint.getLatitude());
-        String lon = String.valueOf(geoPoint.getLongitude());
         String notes = ((EditText)findViewById(R.id.new_spot_notes_editText)).getText().toString().trim();
-        if (fileUri != null) {
-            SpotLocal spot = new SpotLocal("", geoPoint, notes, fileUri.getEncodedPath(), new Date(),spotType);
-            return db.addSpot(spot);
-        }else {
-            SpotLocal spot = new SpotLocal("", geoPoint, notes, null, new Date(),spotType);
-            return db.addSpot(spot);
-        }
+        List<String> arrList = new ArrayList<>();
+        arrList.addAll(uriSet);
+        SpotLocal spotLocal = new SpotLocal("", geoPoint, notes, new Date(),spotType, arrList);
+
+        return local_db.addSpotMultipleImages(spotLocal);
     }
 
     private void createDialogs() {
@@ -213,6 +249,7 @@ public class NewActivity extends AppCompatActivity implements View.OnClickListen
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        Log.d(log,"onActivityResult");
         if (requestCode == CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE) {
             if (resultCode != RESULT_OK) {
                 Toast.makeText(this,getString(R.string.error_message_img),Toast.LENGTH_LONG).show();
@@ -222,5 +259,22 @@ public class NewActivity extends AppCompatActivity implements View.OnClickListen
             }
         }
     }
-}
 
+    private void setViewPagerContent() {
+        Log.d(log,"setViewPagerContent");
+        List<String> imgURLList = new ArrayList<>();
+        imgURLList.addAll(uriSet);
+        for ( String url : imgURLList ){
+            Bundle page = new Bundle();
+            page.putString(IMG_PATH, url);
+            Log.d(log,"adding fragment for img: " + url);
+            viewPagerFragments.add(Fragment.instantiate(this, GalleryItemFragment.class.getName(), page));
+        }
+
+        //after adding all the fragments write the below lines
+
+        PagerAdapter mPagerAdapter = new ScreenSlidePagerAdapter(getSupportFragmentManager(), viewPagerFragments);
+
+        mPager.setAdapter(mPagerAdapter);
+    }
+}

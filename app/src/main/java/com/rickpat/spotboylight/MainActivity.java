@@ -330,14 +330,14 @@ public class MainActivity extends AppCompatActivity implements MapEventsReceiver
                 startActivity(intent);
                 break;
             case R.id.action_hub:
-                Intent hubIntent = new Intent(this, HubActivity2.class);
+                Intent hubIntent = new Intent(this, HubActivity.class);
                 startActivityForResult(hubIntent,HUB_REQUEST);
                 break;
             case R.id.action_new:
                 GeoPoint geoPoint = myPositionOverlay.getMyLocation();
                 if ( geoPoint != null) {
-                    Log.d(log,"starting NewActivity2 with geoPoint: " + geoPoint);
-                    Intent newSpotIntent = new Intent(this, NewActivity2.class);
+                    Log.d(log,"starting NewActivity with geoPoint: " + geoPoint);
+                    Intent newSpotIntent = new Intent(this, NewActivity.class);
                     newSpotIntent.putExtra(GEOPOINT, new Gson().toJson(geoPoint));
                     startActivityForResult(newSpotIntent, NEW_SPOT_REQUEST);
                 }
@@ -391,7 +391,7 @@ public class MainActivity extends AppCompatActivity implements MapEventsReceiver
     @Override
     public void infoCallback(SpotLocal spot) {
         closeAllInfoWindows();
-        Intent infoIntent = new Intent(this,InfoActivity2.class);
+        Intent infoIntent = new Intent(this,InfoActivity.class);
         infoIntent.putExtra(SPOT,new Gson().toJson(spot));
         startActivityForResult(infoIntent,INFO_ACTIVITY_REQUEST);
     }

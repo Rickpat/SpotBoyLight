@@ -6,17 +6,16 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.MenuItem;
 
 import com.google.gson.Gson;
-import com.rickpat.spotboylight.spotboy_db.Spot;
 import com.rickpat.spotboylight.spotboy_db.SpotLocal;
 import com.rickpat.spotboylight.spotboy_db.SpotBoyDBHelper;
 
 import static com.rickpat.spotboylight.Utilities.Constants.HUB_SHOW_ON_MAP;
 import static com.rickpat.spotboylight.Utilities.Constants.INFO_ACTIVITY_REQUEST;
 import static com.rickpat.spotboylight.Utilities.Constants.INFO_ACTIVITY_SPOT_DELETED;
+import static com.rickpat.spotboylight.Utilities.Constants.INFO_ACTIVITY_SPOT_MODIFIED;
 import static com.rickpat.spotboylight.Utilities.Constants.SPOT;
 
 public class HubActivity extends AppCompatActivity implements SpotHubAdapter.IHubAdapter {
@@ -47,7 +46,7 @@ public class HubActivity extends AppCompatActivity implements SpotHubAdapter.IHu
         mRecyclerView.setLayoutManager(mLayoutManager);
 
         // specify an adapter (see also next example)
-        mAdapter = new SpotHubAdapter(spotBoyDBHelper.getSpotList(), this);
+        mAdapter = new SpotHubAdapter(spotBoyDBHelper.getSpotListMultipleImages(), this);
         mRecyclerView.setAdapter(mAdapter);
 
     }
@@ -66,7 +65,7 @@ public class HubActivity extends AppCompatActivity implements SpotHubAdapter.IHu
     }
 
     @Override
-    public void moreButtonCallback(Spot spot) {
+    public void moreButtonCallback(SpotLocal spot) {
         Intent infoIntent = new Intent(this,InfoActivity.class);
         infoIntent.putExtra(SPOT,new Gson().toJson(spot));
         startActivityForResult(infoIntent, INFO_ACTIVITY_REQUEST);
@@ -74,7 +73,7 @@ public class HubActivity extends AppCompatActivity implements SpotHubAdapter.IHu
     }
 
     @Override
-    public void markerButtonCallback(Spot spot) {
+    public void markerButtonCallback(SpotLocal spot) {
         Intent showMarkerIntent = new Intent();
         showMarkerIntent.putExtra(SPOT,new Gson().toJson(spot));
         setResult(HUB_SHOW_ON_MAP, showMarkerIntent);
@@ -84,10 +83,21 @@ public class HubActivity extends AppCompatActivity implements SpotHubAdapter.IHu
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if ( requestCode == INFO_ACTIVITY_REQUEST && resultCode == INFO_ACTIVITY_SPOT_DELETED) {
-            Log.d("AAAAAAA", "spot deleted");
-            SpotBoyDBHelper spotBoyDBHelper = new SpotBoyDBHelper(this, null, null, 1);
-            mAdapter.updateList(spotBoyDBHelper.getSpotList());
+        boolean update = false;
+        if ( requestCode == INFO_ACTIVITY_REQUEST ) {
+            switch (resultCode){
+                case INFO_ACTIVITY_SPOT_DELETED:
+                    update = true;
+                    break;
+                case INFO_ACTIVITY_SPOT_MODIFIED:
+                    update = true;
+                    break;
+            }
+        }
+        if (update){
+            SpotBoyDBHelper spotBoyDBHelper = new SpotBoyDBHelper(this,null,null,1);
+            mAdapter.updateList(spotBoyDBHelper.getSpotListMultipleImages());
+            mAdapter.notifyDataSetChanged();
         }
     }
 }

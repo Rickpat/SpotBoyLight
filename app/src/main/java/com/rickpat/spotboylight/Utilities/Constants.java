@@ -30,6 +30,7 @@ public class Constants {
 
     public static final int HUB_REQUEST = 301;
     public static final int HUB_SHOW_ON_MAP = 302;
+	public static final int HUB_MODIFIED_DATASET = 303;
 
     public static final int KML_REQUEST = 401;
     public static final int KML_LOAD = 402;

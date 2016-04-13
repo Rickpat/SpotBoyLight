@@ -7,7 +7,7 @@
     android:layout_height="match_parent"
     android:id="@+id/hub_coordinator"
     android:fitsSystemWindows="true"
-    tools:context="com.rickpat.spotboylight.HubActivity">
+    tools:context=".HubActivity">
 
     <android.support.design.widget.AppBarLayout
         android:layout_width="match_parent"
