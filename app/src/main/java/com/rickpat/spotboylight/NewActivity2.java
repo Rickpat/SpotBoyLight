@@ -26,6 +26,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.rickpat.spotboylight.Utilities.ScreenSlidePagerAdapter;
 import com.rickpat.spotboylight.Utilities.SpotType;
 import com.rickpat.spotboylight.Utilities.Utilities;
 import com.rickpat.spotboylight.fragments.GalleryItemFragment;
@@ -146,7 +147,6 @@ public class NewActivity2 extends AppCompatActivity implements View.OnClickListe
 
         if (!mediaStorageDir.exists()) {
             if (!mediaStorageDir.mkdirs()) {
-                Log.d("MyCameraApp", "failed to create directory");
                 return null;
             }
         }
@@ -279,32 +279,5 @@ public class NewActivity2 extends AppCompatActivity implements View.OnClickListe
         PagerAdapter mPagerAdapter = new ScreenSlidePagerAdapter(getSupportFragmentManager(), viewPagerFragments);
 
         mPager.setAdapter(mPagerAdapter);
-    }
-
-    private class ScreenSlidePagerAdapter extends FragmentStatePagerAdapter {
-
-        private List<Fragment> fragmentList;
-
-        public ScreenSlidePagerAdapter(FragmentManager fm, List<Fragment> viewPagerFragments) {
-            super(fm);
-            this.fragmentList = viewPagerFragments;
-        }
-
-        @Override
-        public Fragment getItem(int position) {
-            Log.d(log,"position: " + position);
-            return viewPagerFragments.get(position);
-        }
-
-        @Override
-        public int getCount() {
-            return viewPagerFragments.size();
-        }
-
-        @Override
-        public Object instantiateItem(ViewGroup container, int position) {
-            return super.instantiateItem(container, position);
-
-        }
     }
 }
