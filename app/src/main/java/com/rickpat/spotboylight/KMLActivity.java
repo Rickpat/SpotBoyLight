@@ -20,11 +20,18 @@ import java.util.List;
 
 import static com.rickpat.spotboylight.Utilities.Constants.*;
 
+/*
+* This activity manages the kml support
+* it purpose is to load or remove kml files.
+* */
+
 public class KMLActivity extends AppCompatActivity implements View.OnClickListener {
 
     private String log = "KMLActivity";
     private AlertDialog kmlDialog;
     private List<File> fileList;
+
+    //todo file chooser support
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

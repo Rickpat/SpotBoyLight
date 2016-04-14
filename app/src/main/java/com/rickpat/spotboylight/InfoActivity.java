@@ -57,13 +57,12 @@ public class InfoActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onPause() {
         super.onPause();
-        Log.d(log, "onPause");
+        //next onSaveInstance...
     }
 
     @Override   //after onPause
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        Log.d(log, "onSaveInstanceState");
         SharedPreferences.Editor editor = getSharedPreferences(PREFERENCES,MODE_PRIVATE).edit();
         editor.putBoolean(MODIFIED, modified);
         editor.apply();
@@ -79,7 +78,6 @@ public class InfoActivity extends AppCompatActivity implements View.OnClickListe
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }catch (NullPointerException e){}
         getSupportActionBar().setDisplayShowHomeEnabled(true);
-
         /*The activity stops when there's no given spot to show */
         Bundle bundle = getIntent().getExtras();
         if (bundle.containsKey(SPOT)){
@@ -93,36 +91,30 @@ public class InfoActivity extends AppCompatActivity implements View.OnClickListe
     @Override   //after onCreate or onRestoreInstanceState
     protected void onStart() {
         super.onStart();
-        Log.d(log, "onStart");
         //next onRestoreInstance... or onResume
     }
 
     @Override   //after onCreate if screen orientation changed
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
-        Log.d(log, "onRestoreInstanceState");
         SharedPreferences preferences = getSharedPreferences(PREFERENCES, MODE_PRIVATE);
         modified = preferences.getBoolean(MODIFIED,false);
         if (modified){
             SpotBoyDBHelper spotBoyDBHelper = new SpotBoyDBHelper(InfoActivity.this, null, null, 1);
             spot = spotBoyDBHelper.getMultipleImagesSpot(spot.getId());
-            Log.d(log, "spot refreshed spotType: " + spot.getSpotType());
         }
-
         //next onResume
     }
 
     @Override   //after onStart or onRestoreInstance...
     protected void onResume() {
         super.onResume();
-        Log.d(log, "onResume");
         setContent();
         setDialogs();
         setViewPagerContent();
     }
 
     private void setContent() {
-        Log.d(log,"setContent" );
         ((TextView) findViewById(R.id.info_catTextView)).setText(spot.getSpotType().toString());
         ((TextView)findViewById(R.id.info_notesTextView)).setText(spot.getNotes());
         DateFormat df = new SimpleDateFormat(TIME_FORMAT_INFO, Locale.GERMAN);
@@ -140,7 +132,6 @@ public class InfoActivity extends AppCompatActivity implements View.OnClickListe
                 .setSingleChoiceItems(catItems, selectedItem, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        Log.d(log, "selection: " + catItems[which]);
                     }
                 }).setNegativeButton(getText(R.string.cancel), new DialogInterface.OnClickListener() {
                     @Override
@@ -174,7 +165,6 @@ public class InfoActivity extends AppCompatActivity implements View.OnClickListe
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         String notes = editText.getText().toString().trim();
-                        Log.d(log,"new notes: " + notes);
                         spot.setNotes(notes);
                         SpotBoyDBHelper spotBoyDBHelper = new SpotBoyDBHelper(InfoActivity.this, null, null, 1);
                         long dbResult = spotBoyDBHelper.updateSpotMultipleImages(spot);
@@ -196,13 +186,11 @@ public class InfoActivity extends AppCompatActivity implements View.OnClickListe
     * For each image a fragment in the view pager
     * An adapter cares about the fragments inside the view pager.
     * */
-
     private void setViewPagerContent() {
         List<Fragment> viewPagerFragments = new Vector<>(VIEW_PAGER_MAX_FRAGMENTS);
         for ( String url : spot.getUrlList() ){
             Bundle page = new Bundle();
             page.putString(IMG_PATH, url);
-            Log.d(log,"adding fragment for img: " + url);
             viewPagerFragments.add(Fragment.instantiate(this, GalleryItemFragment.class.getName(), page));
         }
         PagerAdapter mPagerAdapter = new ScreenSlidePagerAdapter(getSupportFragmentManager(), viewPagerFragments);

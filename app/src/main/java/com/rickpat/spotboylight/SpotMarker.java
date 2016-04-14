@@ -6,6 +6,10 @@ import com.rickpat.spotboylight.spotboy_db.Spot;
 import org.osmdroid.bonuspack.overlays.Marker;
 import org.osmdroid.views.MapView;
 
+/*
+* gets spot data through constructor
+* */
+
 public class SpotMarker extends Marker {
 
     private Spot spot;

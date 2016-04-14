@@ -17,11 +17,21 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Locale;
 
+import static com.rickpat.spotboylight.Utilities.Constants.TIME_FORMAT_INFO;
+
+/*
+* pop up on map by press event on SpotMarker on map and shows information
+* about a spot and can led to InfoActivity by Callback
+* */
+
 public class SpotInfoWindow extends InfoWindow {
 
     private InfoCallback infoCallback;
     private Activity activity;
 
+    /*
+    * Callback to force MainActivity to start InfoActivity with given spot
+    * */
     public interface InfoCallback{
         void infoCallback(Spot spot);
     }
@@ -32,6 +42,9 @@ public class SpotInfoWindow extends InfoWindow {
         this.activity = activity;
     }
 
+    /*
+    * sets the content of the infoWindow
+    * */
     @Override
     public void onOpen(Object item) {
         final SpotMarker myMarker = (SpotMarker)item;
@@ -41,7 +54,7 @@ public class SpotInfoWindow extends InfoWindow {
         TextView notesTextView = (TextView) mView.findViewById(R.id.infoWin_notes);
         TextView dateTextView = (TextView) mView.findViewById(R.id.infoWin_time);
 
-        DateFormat df = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.GERMAN);
+        DateFormat df = new SimpleDateFormat(TIME_FORMAT_INFO, Locale.GERMAN);
 
         if ( myMarker.getSpot().getUrlList() != null){
             if (myMarker.getSpot().getUrlList().size() > 0 ){

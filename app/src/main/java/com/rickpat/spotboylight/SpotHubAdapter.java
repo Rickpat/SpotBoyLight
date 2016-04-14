@@ -16,6 +16,12 @@ import com.rickpat.spotboylight.spotboy_db.Spot;
 
 import java.util.List;
 
+/*
+* The adapter creates for each spotList item a card view and puts it to the recycler
+* Callbacks to the corresponding activity can start InfoActivity for the given spot
+* or force HubActivity to finish and show the given spot on the map in MainActivity.
+* */
+
 public class SpotHubAdapter extends RecyclerView.Adapter<SpotHubAdapter.ViewHolder> {
     private List<Spot> spotList;
     private int displayW;
@@ -27,6 +33,9 @@ public class SpotHubAdapter extends RecyclerView.Adapter<SpotHubAdapter.ViewHold
         void markerButtonCallback(Spot spot);
     }
 
+    /*
+    * The content holder. for each spot a ViewHolden
+    * */
     public static class ViewHolder extends RecyclerView.ViewHolder {
         public TextView catTextView;
         public Button moreButton;
@@ -42,7 +51,6 @@ public class SpotHubAdapter extends RecyclerView.Adapter<SpotHubAdapter.ViewHold
     }
 
     public SpotHubAdapter(List<Spot> spotList, Activity activity) {
-
         Display display = activity.getWindowManager().getDefaultDisplay();
         Point size = new Point();
         display.getSize(size);
@@ -59,6 +67,9 @@ public class SpotHubAdapter extends RecyclerView.Adapter<SpotHubAdapter.ViewHold
         return new ViewHolder(v);
     }
 
+    /*
+    * loads content from spotList into ViewHolder(CardView)
+    * */
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
 

@@ -36,18 +36,46 @@ import java.util.List;
 
 import static com.rickpat.spotboylight.Utilities.Constants.*;
 
+
+/*
+ * MainActivity shows the map with SpotMarker(s) and or SpotCluster(s).
+ * It loads all spots from database and creates SpotMarker and puts them furthermore in SpotClusters.
+ * Each SpotCluster represents a layer on the map.
+ * SpotLayer are selectable by an AlertDialog.
+ * The Dialog pops up by long press event on the FloatingActionButton.
+ * For each spot type like STREET or PARK is a SpotCluster provided.
+ *
+ * A new Spot can be created by the toolbar item "NEW" or a long press event on the map.
+ * GPS data gets cached. If a screen rotation happens and there's no "fresh" gps data and
+ * a "new spot" event happens by toolbar, the app asks by an AlertDialog if it can use the
+ * cached gps data to avoid latency.
+ *
+ * The following menu items link to other activities:
+ * - NEW    -> create a new spot
+ * - HUB    -> show all spots in an recycler view with card views
+ * - KML    -> load a KML file on displey it on the map or remove it
+ * - SETTINGS   -> //todo
+ * - ABOUT  -> displays logo, creator and used libraries
+ *
+ * Other activities
+ * - SpotInfoWindows can call InfoActivity to show all pictures, notes, type and time of creation
+ * - If GPS is not activated onStart() a AlertDialog can led to settings to turn it on
+  * */
+
 public class MainActivity extends AppCompatActivity implements MapEventsReceiver, SpotInfoWindow.InfoCallback {
 
     private String log = "MainActivity_LOG";
+    private MyPositionOverlay myPositionOverlay;            //shows the users position
+    private MapView map;                                    //manages the map
+    private AlertDialog markerDialog;                       //to select the spot layer
+    private AlertDialog newMarkerDialog;                    //pops up by long press on map.
+    private HashMap<SpotType,SpotCluster> clusterHashMap;   //links spot type to SpotCluster
+    private File kmlFile;                                   //a kml file. its default -> null
+    private FolderOverlay kmlOverlay;                       //KML layer
 
-    private MyPositionOverlay myPositionOverlay;
-    private MapView map;
-    private AlertDialog markerDialog;
-    private AlertDialog newMarkerDialog;
-    private File kmlFile;
-    private HashMap<SpotType,SpotCluster> clusterHashMap;
-    private FolderOverlay kmlOverlay;
-
+    /*
+    * saves states
+    * */
     @Override   //after onPause
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
@@ -66,24 +94,17 @@ public class MainActivity extends AppCompatActivity implements MapEventsReceiver
         editor.apply();
     }
 
-    @Override
-    protected void onRestoreInstanceState(Bundle savedInstanceState) {
-        super.onRestoreInstanceState(savedInstanceState);
-        Log.d(log, "onRestoreInstanceState");
-        SharedPreferences preferences = getSharedPreferences(PREFERENCES, MODE_PRIVATE);
-        if (preferences.contains(KML_FILE)){
-            kmlFile = new Gson().fromJson(preferences.getString(KML_FILE,""),File.class);
-        }
-        map.getController().setCenter(new Gson().fromJson(preferences.getString(GEOPOINT, ""), GeoPoint.class));
-        map.getController().setZoom(preferences.getInt(ZOOM_LEVEL, 18));
-    }
-
+    /*
+    * called if user leaves the activity
+    * removes all layer from map to avoid redundancies and turns off GPS
+    * */
     @Override   //called by action
     protected void onPause() {
         super.onPause();
         Log.d(log, "onPause");
+        closeAllInfoWindows();
         myPositionOverlay.disableMyLocation();
-        removeMarkerCluster();
+        removeAllClusters();
         removeKMLOverlay();
     }
 
@@ -97,7 +118,7 @@ public class MainActivity extends AppCompatActivity implements MapEventsReceiver
 
         setMap();
         setMarkerDialog();
-        setFab();
+        setFloatingActionButton();
         //next onStart
     }
 
@@ -109,28 +130,66 @@ public class MainActivity extends AppCompatActivity implements MapEventsReceiver
         // otherwise onResume
     }
 
+
+    /*
+    * restores states and files
+    * */
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        Log.d(log, "onRestoreInstanceState");
+        SharedPreferences preferences = getSharedPreferences(PREFERENCES, MODE_PRIVATE);
+        if (preferences.contains(KML_FILE)){
+            kmlFile = new Gson().fromJson(preferences.getString(KML_FILE,""),File.class);
+        }
+        map.getController().setCenter(new Gson().fromJson(preferences.getString(GEOPOINT, ""), GeoPoint.class));
+        map.getController().setZoom(preferences.getInt(ZOOM_LEVEL, 18));
+        //next onResume()
+    }
+
+    /*
+    * activates GPS
+    * creates overlays / layers
+    * */
     @Override   //after onStart or onRestoreInstanceState
     protected void onResume() {
         super.onResume();
         Log.d(log, "onResume");
         myPositionOverlay.enableMyLocation();
-        setMarkerCluster();
+        createAllClusters();
         createKMLOverlay();
         //now activity is running till onPause
     }
 
+    /*
+    * called when user returns from a started activity like
+     * - NewActivity
+     * - HubActivity
+     * - InfoActivity
+     * - AboutActivity      // not necessary
+     * - SettingsActivity   //todo
+    * */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         Log.d(log, "onActivityResult");
-        if ( requestCode == HUB_REQUEST && resultCode == HUB_SHOW_ON_MAP){
-            Bundle bundle = data.getExtras();
-            if (bundle.containsKey(SPOT)){
-                Spot spot = new Gson().fromJson(bundle.getString(SPOT),Spot.class);
-                Log.d(log,"received spot with id: " + spot.getId());
-                map.getController().animateTo(spot.getGeoPoint());
+
+        if ( requestCode == HUB_REQUEST ){
+            switch (resultCode){
+                case HUB_SHOW_ON_MAP:
+                    Bundle bundle = data.getExtras();
+                    if (bundle.containsKey(SPOT)){
+                        Spot spot = new Gson().fromJson(bundle.getString(SPOT),Spot.class);
+                        Log.d(log,"received spot with id: " + spot.getId());
+                        map.getController().animateTo(spot.getGeoPoint());
+                    }
+                    break;
+                case HUB_MODIFIED_DATASET:
+                    //todo test
+                    break;
             }
         }
+
         if ( requestCode == INFO_ACTIVITY_REQUEST){
             switch (resultCode){
                 case INFO_ACTIVITY_SPOT_MODIFIED:
@@ -165,6 +224,7 @@ public class MainActivity extends AppCompatActivity implements MapEventsReceiver
     private void setMarkerDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         final String[] items = Utilities.getSpotTypes();
+        //todo save and restore selection
         boolean[] selectedItems = new boolean[items.length];
         for (int i = 0 ; i < selectedItems.length ; i++){
             selectedItems[i] = true;
@@ -189,6 +249,9 @@ public class MainActivity extends AppCompatActivity implements MapEventsReceiver
                 }).create();
     }
 
+    /*
+    * removes a SpotCluster from map by given SpotType
+    * */
     private void removeCluster(SpotType spotTypeSelection) {
         if( map.getOverlays().contains(clusterHashMap.get(spotTypeSelection)) ){
             map.getOverlays().remove(clusterHashMap.get(spotTypeSelection));
@@ -196,6 +259,9 @@ public class MainActivity extends AppCompatActivity implements MapEventsReceiver
         }
     }
 
+    /*
+    * adds a SpotCluster to map by given SpotType
+    * */
     private void addCluster(SpotType spotTypeSelection) {
         if (!map.getOverlays().contains(clusterHashMap.get(spotTypeSelection))){
             map.getOverlays().add(clusterHashMap.get(spotTypeSelection));
@@ -203,14 +269,20 @@ public class MainActivity extends AppCompatActivity implements MapEventsReceiver
         }
     }
 
-    private void removeMarkerCluster(){
+    /*
+    * removes all SpotClusters from map
+    * */
+    private void removeAllClusters(){
         for (SpotCluster spotCluster : clusterHashMap.values()){
             map.getOverlays().remove(spotCluster);
         }
         clusterHashMap.clear();
     }
 
-    private void setMarkerCluster() {
+    /*
+    * creates all SpotMarkers and SpotClusters and adds them to map
+    * */
+    private void createAllClusters() {
         SpotBoyDBHelper spotBoyDBHelper = new SpotBoyDBHelper(this, null, null, 1);
         List<Spot> spotList = spotBoyDBHelper.getSpotListMultipleImages();
         if ( spotList.size() > 0 ){
@@ -241,6 +313,9 @@ public class MainActivity extends AppCompatActivity implements MapEventsReceiver
         map.invalidate();
     }
 
+    /*
+    * creates the KML overlay / layer if available
+    * */
     private void createKMLOverlay() {
         if ( kmlFile != null ) {
             KmlDocument kmlDocument = new KmlDocument();
@@ -252,6 +327,9 @@ public class MainActivity extends AppCompatActivity implements MapEventsReceiver
         }
     }
 
+    /*
+    * removes the KML overlay / layer if available
+    * */
     private void removeKMLOverlay() {
         if ( kmlFile != null ){
             if (map.getOverlays().contains(kmlOverlay)){
@@ -262,7 +340,7 @@ public class MainActivity extends AppCompatActivity implements MapEventsReceiver
         }
     }
 
-    private void setFab() {
+    private void setFloatingActionButton() {
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -292,6 +370,10 @@ public class MainActivity extends AppCompatActivity implements MapEventsReceiver
         });
     }
 
+    /*
+    * sets the default zoom level
+    * adds a MapEventsOverlay to receive tab events on map
+    * */
     private void setMap() {
         map = (MapView) findViewById(R.id.map);
         map.setTileSource(TileSourceFactory.MAPNIK);
@@ -303,25 +385,21 @@ public class MainActivity extends AppCompatActivity implements MapEventsReceiver
 
         myPositionOverlay = new MyPositionOverlay(this, map);
         myPositionOverlay.enableMyLocation();
-        myPositionOverlay.runOnFirstFix(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    map.getController().animateTo(myPositionOverlay.getMyLocation());
-                } catch (Exception e) {
-                    Log.d(log, e.toString());
-                }
-            }
-        });
         map.getOverlays().add(myPositionOverlay);
     }
 
+    /*
+    * creates the toolbar menu
+    * */
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
     }
 
+    /*
+    * receives toolbar item selections and starts corresponding activities
+    * */
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()){
@@ -349,6 +427,14 @@ public class MainActivity extends AppCompatActivity implements MapEventsReceiver
         return super.onOptionsItemSelected(item);
     }
 
+    /*
+    * MapEventsOverlay listener
+    * the overlay is on the bottom of the layer stack
+    * all other layers are above
+    * if a press event happens on the map, the map processes the event from top of the layer stack
+    * to bottom. if no other listener grabs the event, it lands here.
+    *
+    * */
     @Override
     public boolean singleTapConfirmedHelper(GeoPoint p) {
         closeAllInfoWindows();
@@ -363,6 +449,9 @@ public class MainActivity extends AppCompatActivity implements MapEventsReceiver
         }
     }
 
+    /*
+    * long press event on bottom layer shows newMarkerDialog -> links to NewActivity
+    * */
     @Override
     public boolean longPressHelper(final GeoPoint p) {
         closeAllInfoWindows();
@@ -388,9 +477,11 @@ public class MainActivity extends AppCompatActivity implements MapEventsReceiver
         return false;
     }
 
+    /*
+    * A callback from SpotInfoWindow to start InfoActivity
+    * */
     @Override
     public void infoCallback(Spot spot) {
-        closeAllInfoWindows();
         Intent infoIntent = new Intent(this,InfoActivity.class);
         infoIntent.putExtra(SPOT,new Gson().toJson(spot));
         startActivityForResult(infoIntent,INFO_ACTIVITY_REQUEST);

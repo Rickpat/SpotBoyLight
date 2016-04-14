@@ -17,7 +17,6 @@ public class Constants {
     public static String ZOOM_LEVEL = "ZOOM_LEVEL";
     public static String MODIFIED = "MODIFIED";
 
-    public static final String TIME_FORMAT = "HH:mm";
     public static final String TIME_FORMAT_INFO = "EEE, dd MMM yyyy HH:mm:ss z";
     public static final String KML_FILE = "KML_FILE";
 

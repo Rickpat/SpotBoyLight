@@ -30,7 +30,7 @@ public class Spot {
     * this constructor is used for locally stored spots
     * */
     public Spot(String id, GeoPoint geoPoint, String notes, List<String> urlList, Date date, SpotType spotType) {
-        this.googleId = "-1";   // this can help to identify it's source
+        this.googleId = "-1";   // this can help to identify its source
         this.id = id;
         this.geoPoint = geoPoint;
         this.notes = notes;

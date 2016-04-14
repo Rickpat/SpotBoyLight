@@ -16,7 +16,7 @@
     <string name="creation_time">2016</string>
     <string name="libraries">libraries</string>
     <string name="default_content_description">bla</string>
-    <string name="waiting_for_gps_signal_message">receiving gps signal</string>
+    <string name="waiting_for_gps_signal_message">waiting for gps data</string>
     <string name="new_spot_default_cat">STREET</string>
     <string name="category">category</string>
     <string name="xxx">xxxxxx</string>
